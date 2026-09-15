@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Seating Plan Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .admin-wrap{max-width:900px;margin:0 auto;padding:32px 22px 60px;}
+  .admin-header{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:24px;}
+  .admin-header h1{font-family:var(--serif);font-size:1.7rem;margin:0;color:var(--navy-deep);}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:32px;}
+  .stat-box{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;}
+  .stat-box .num{font-family:var(--serif);font-weight:600;font-size:1.8rem;color:var(--navy-deep);display:block;}
+  .stat-box .label{font-size:.8rem;color:var(--ink-soft);}
+  .admin-section{margin-bottom:32px;}
+  .admin-section h2{font-family:var(--serif);font-size:1.15rem;color:var(--navy-deep);margin:0 0 12px;}
+  table.admin-table{width:100%;border-collapse:collapse;background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:.85rem;}
+  table.admin-table th, table.admin-table td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);}
+  table.admin-table th{background:#f0ede4;font-weight:600;color:var(--ink-soft);font-size:.75rem;text-transform:uppercase;letter-spacing:.4px;}
+  table.admin-table tr:last-child td{border-bottom:none;}
+  .empty-note{color:var(--ink-soft);font-size:.88rem;font-style:italic;}
+  .denied{padding:60px 22px;text-align:center;color:var(--ink-soft);}
+  .badge-warn{background:#fbeee3;color:#8a4a1c;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:600;}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand"><span class="brand-mark">§</span><span class="brand-text">Admin Dashboard</span></div>
+    <a href="/" class="brand-sub" style="color:#c7c2b3;">&larr; Back to app</a>
+  </div>
+</header>
+
+<div id="denied" class="denied" hidden>
+  <p>This page is only visible to the site administrator's signed-in account.</p>
+  <p><a href="/">Go back and sign in</a></p>
+</div>
+
+<main id="admin-content" class="admin-wrap" hidden>
+  <div class="admin-header">
+    <h1>Usage &amp; data overview</h1>
+    <span id="last-updated" style="font-size:.82rem;color:var(--ink-soft);"></span>
+  </div>
+
+  <div class="stat-grid" id="stat-grid"></div>
+
+  <div class="admin-section">
+    <h2>Branches with no seating published yet</h2>
+    <div id="missing-branches"></div>
+  </div>
+
+  <div class="admin-section">
+    <h2>Recent failed roll-number lookups</h2>
+    <div id="recent-errors"></div>
+  </div>
+
+  <div class="admin-section">
+    <h2>Logged-in users</h2>
+    <div id="users-table"></div>
+  </div>
+</main>
+
+<script>
+const ADMIN_EMAIL = 'abhishek.2428cseai17@kiet.edu';
+
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtDate(iso){ if(!iso) return '—'; return new Date(iso).toLocaleString('en-IN', {dateStyle:'medium', timeStyle:'short'}); }
+
+async function init() {
+  const email = (localStorage.getItem('kiet_email') || '').toLowerCase();
+  if (email !== ADMIN_EMAIL) {
+    document.getElementById('denied').hidden = false;
+    return;
+  }
+
+  let data;
+  try {
+    const res = await fetch(`/api/admin/summary?email=${encodeURIComponent(email)}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to load admin summary.');
+    }
+    data = await res.json();
+  } catch (e) {
+    document.getElementById('admin-content').hidden = false;
+    document.getElementById('stat-grid').innerHTML = `<p class="empty-note">${esc(e.message)}</p>`;
+    return;
+  }
+
+  document.getElementById('admin-content').hidden = false;
+  document.getElementById('last-updated').textContent = 'Loaded ' + new Date().toLocaleTimeString('en-IN');
+
+  document.getElementById('stat-grid').innerHTML = `
+    <div class="stat-box"><span class="num">${data.unique_users}</span><span class="label">Unique logins</span></div>
+    <div class="stat-box"><span class="num">${data.total_logins}</span><span class="label">Total logins</span></div>
+    <div class="stat-box"><span class="num">${data.total_students_in_dataset}</span><span class="label">Students in dataset</span></div>
+    <div class="stat-box"><span class="num">${data.total_rooms_published}</span><span class="label">Rooms published</span></div>
+    <div class="stat-box"><span class="num">${data.error_count}</span><span class="label">Failed lookups (all time)</span></div>
+  `;
+
+  const missingEl = document.getElementById('missing-branches');
+  if (!data.branches_missing_seating || data.branches_missing_seating.length === 0) {
+    missingEl.innerHTML = '<p class="empty-note">Every branch/semester in the dataset has at least one published seating date.</p>';
+  } else {
+    missingEl.innerHTML = `<table class="admin-table"><thead><tr><th>Branch / Sem</th><th>Students affected</th></tr></thead><tbody>
+      ${data.branches_missing_seating.map(b => `<tr><td><span class="badge-warn">${esc(b.branch_sem)}</span></td><td>${b.students}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  const errEl = document.getElementById('recent-errors');
+  if (!data.recent_errors || data.recent_errors.length === 0) {
+    errEl.innerHTML = '<p class="empty-note">No failed lookups recorded yet.</p>';
+  } else {
+    errEl.innerHTML = `<table class="admin-table"><thead><tr><th>Roll number searched</th><th>When</th></tr></thead><tbody>
+      ${data.recent_errors.slice(0, 50).map(e => `<tr><td>${esc(e.rollNo)}</td><td>${fmtDate(e.at)}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  const usersEl = document.getElementById('users-table');
+  if (!data.users || data.users.length === 0) {
+    usersEl.innerHTML = '<p class="empty-note">No logins recorded yet.</p>';
+  } else {
+    usersEl.innerHTML = `<table class="admin-table"><thead><tr><th>Email</th><th>Roll No</th><th>Logins</th><th>First seen</th><th>Last seen</th></tr></thead><tbody>
+      ${data.users.map(u => `<tr><td>${esc(u.email)}</td><td>${esc(u.rollNo)}</td><td>${u.loginCount}</td><td>${fmtDate(u.firstLoginAt)}</td><td>${fmtDate(u.lastLoginAt)}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>

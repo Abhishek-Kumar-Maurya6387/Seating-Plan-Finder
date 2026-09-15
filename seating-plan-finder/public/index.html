@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seating Plan Finder — KIET ESE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand">
+      <span class="brand-mark">§</span>
+      <span class="brand-text">Seating Plan Finder</span>
+    </div>
+    <span class="brand-sub">ESE Even Sem 2025&ndash;26 &middot; KIET Campus</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section id="login-screen" class="search-panel">
+    <h1>Sign in to continue</h1>
+    <p class="lede">Use your official KIET email and your roll number — a one-time sign-in per device. After this, opening the app again shows your seat straight away, no retyping.</p>
+
+    <form id="login-form" autocomplete="off">
+      <input id="login-email" type="email" placeholder="yourname@kiet.edu" aria-label="KIET email" required>
+      <input id="login-roll" type="text" inputmode="numeric" placeholder="Your roll number" aria-label="Roll number" required>
+      <button type="submit">Continue</button>
+    </form>
+    <p id="login-hint" class="form-hint"></p>
+  </section>
+
+  <div id="app-screen" hidden>
+    <div class="account-strip">
+      <span>Signed in as <strong id="account-badge"></strong></span>
+      <span class="right-links">
+        <a id="admin-link" href="/admin.html" class="link-btn" hidden>Admin panel</a>
+        <button type="button" id="switch-account" class="link-btn">Not you? Switch account</button>
+      </span>
+    </div>
+
+    <section class="search-panel">
+      <h1>Where am I sitting?</h1>
+      <p class="lede">Enter your roll number. Everything else — room, seat, timing, and who's around you — is pulled straight from the exam cell's seating data.</p>
+
+      <form id="search-form" autocomplete="off">
+        <input
+          id="roll-input"
+          type="text"
+          inputmode="numeric"
+          placeholder="e.g. 202401100200001"
+          aria-label="Roll number"
+        >
+        <button type="submit">Find my seat</button>
+      </form>
+      <p id="form-hint" class="form-hint"></p>
+    </section>
+
+    <section id="results" class="results" hidden></section>
+
+    <section id="empty-state" class="empty-state">
+      <div class="empty-illustration" aria-hidden="true">
+        <div class="grid-demo">
+          <span></span><span></span><span></span>
+          <span></span><span class="here"></span><span></span>
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+      <p>No search yet. Type in a roll number above to pull up the seating card.</p>
+    </section>
+  </div>
+
+  <footer class="foot-note">
+    <p>Demo dataset &middot; sample exam dates &amp; a subset of rooms. Adjacent-section predictions are best-effort, not official.</p>
+  </footer>
+
+</main>
+
+<template id="tpl-session-card">
+  <article class="session-card">
+    <div class="session-card-head">
+      <span class="tag tag-status"></span>
+      <span class="session-date"></span>
+    </div>
+
+    <div class="exam-subject-line">
+      <span class="exam-subject-label">Exam</span>
+      <span class="exam-subject-value"></span>
+    </div>
+
+    <div class="session-main">
+      <div class="session-room">
+        <span class="room-label">Room</span>
+        <span class="room-value"></span>
+      </div>
+      <dl class="session-meta">
+        <div><dt>Shift</dt><dd class="meta-shift"></dd></div>
+        <div><dt>Building</dt><dd class="meta-building"></dd></div>
+        <div><dt>Branch / Section</dt><dd class="meta-branch"></dd></div>
+        <div><dt>Seat position</dt><dd class="meta-seat"></dd></div>
+      </dl>
+    </div>
+
+    <p class="not-published-note">Seating plan for this exam hasn't been published yet — check back closer to the date.</p>
+
+    <details class="room-details">
+      <summary>Room seating table &amp; branch breakdown</summary>
+      <div class="room-details-inner">
+
+        <div class="room-stats">
+          <div><span class="stat-num stat-total"></span><span class="stat-label">students in this room</span></div>
+          <div><span class="stat-num stat-same"></span><span class="stat-label">from your branch &amp; section</span></div>
+        </div>
+
+        <h4 class="subhead">Branch / section breakdown in this room</h4>
+        <table class="desc-table">
+          <thead><tr><th>Branch</th><th>Sem</th><th>Sec</th><th>Roll range</th><th>Seats</th></tr></thead>
+          <tbody class="desc-tbody"></tbody>
+        </table>
+
+        <h4 class="subhead">Exact seating table — your seat is highlighted</h4>
+        <div class="seat-table-wrap">
+          <div class="seat-table"></div>
+        </div>
+        <p class="seat-table-note">Loaded from the room-wise seating PDF grid. Gaps between column pairs mirror the printed layout — each pair is one bench.</p>
+      </div>
+    </details>
+  </article>
+</template>
+
+<script src="script.js"></script>
+</body>
+</html>
