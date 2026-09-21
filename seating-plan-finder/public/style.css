@@ -301,6 +301,7 @@ body{
   #roll-input, #search-form button{padding:12px 14px;}
   .session-meta{grid-template-columns:1fr 1fr;}
   #search-form{flex-direction:column;}
+  #roll-input{flex:0 1 auto;width:100%;}
   #search-form button{width:100%;}
   .desc-table{
     width:100%;
