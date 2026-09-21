@@ -80,6 +80,7 @@ app.get('/api/lookup/:roll', (req, res) => {
     branch: student.branch,
     sem: student.sem,
     section: student.section,
+    datesheet_cards: student.datesheet_cards || [],
     next_session: upcoming[0] || null,
     upcoming_sessions: upcoming.slice(1),
     past_sessions: past,

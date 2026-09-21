@@ -117,14 +117,16 @@ async function fetchRoom(roomKey) {
 
 function renderDescTable(tbody, roomDescription) {
   tbody.innerHTML = '';
+  const dash = (v) => (v === null || v === undefined || v === '') ? '—' : v;
   (roomDescription || []).forEach((d) => {
     const tr = document.createElement('tr');
+    const rollRange = (d.roll_start && d.roll_end) ? `${d.roll_start}&ndash;${d.roll_end}` : '—';
     tr.innerHTML = `
-      <td>${d.branch}</td>
-      <td>${d.sem}</td>
-      <td>${d.sec}</td>
-      <td class="mono">${d.roll_start}&ndash;${d.roll_end}</td>
-      <td>${d.seat_count}</td>
+      <td>${dash(d.branch)}</td>
+      <td>${dash(d.sem)}</td>
+      <td>${dash(d.sec)}</td>
+      <td class="mono">${rollRange}</td>
+      <td>${dash(d.seat_count)}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -199,10 +201,25 @@ function buildSessionCard(session, status, myRoll) {
   }
 
   node.querySelector('.room-value').textContent = session.room || '—';
-  node.querySelector('.meta-shift').textContent = `${session.shift} (${session.timing})`;
-  node.querySelector('.meta-building').textContent = `${session.building || '—'} block, ${session.floor || '—'}`;
+  node.querySelector('.meta-shift').textContent = session.shift ? `${session.shift}${session.timing ? ' (' + session.timing + ')' : ''}` : '—';
+  node.querySelector('.meta-building').textContent = session.building ? `${session.building} block${session.floor ? ', ' + session.floor : ''}` : '—';
   node.querySelector('.meta-branch').textContent = `${session.branch || '—'} · Sem ${session.sem || '—'} · Sec ${session.section || '—'}`;
-  node.querySelector('.meta-seat').textContent = `Row ${session.seat_row}, Bench ${session.bench_no} (Seat ${session.bench_position})`;
+  node.querySelector('.meta-seat').textContent = session.seat_row
+    ? `Row ${session.seat_row}, Bench ${session.bench_no} (Seat ${session.bench_position})`
+    : (session.bench_no ? `Seat ${session.bench_no}` : '—');
+
+  if (session.proctor) {
+    const proctorRow = node.querySelector('.meta-proctor-row');
+    proctorRow.hidden = false;
+    node.querySelector('.meta-proctor').textContent = session.proctor;
+  }
+
+  if (session.ssed_tip) {
+    const tip = document.createElement('p');
+    tip.className = 'ssed-tip';
+    tip.textContent = '⚠ ' + session.ssed_tip;
+    node.querySelector('.session-main').after(tip);
+  }
 
   node.querySelector('.stat-total').textContent = session.room_total_students ?? '—';
   node.querySelector('.stat-same').textContent = session.same_branch_section_count ?? '—';
@@ -210,6 +227,10 @@ function buildSessionCard(session, status, myRoll) {
   renderDescTable(node.querySelector('.desc-tbody'), session.room_description);
 
   const details = node.querySelector('.room-details');
+  if (!session.room_key) {
+    details.hidden = true;
+    return node;
+  }
   const seatTableEl = node.querySelector('.seat-table');
   let loaded = false;
   details.addEventListener('toggle', async () => {
@@ -228,6 +249,35 @@ function buildSessionCard(session, status, myRoll) {
   return node;
 }
 
+function fmtDateShort(dateStr) {
+  const [dd, mm, yyyy] = dateStr.split('-').map(Number);
+  const dt = new Date(yyyy, mm - 1, dd);
+  return dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+}
+
+function renderDatesheetCards(cards) {
+  if (!cards || cards.length === 0) return;
+
+  const section = document.createElement('div');
+  section.className = 'datesheet-section';
+  section.innerHTML = `<h2 class="section-heading">Your full datesheet</h2><p class="section-sub">Based on your branch — shown whether or not seating is published yet.</p>`;
+
+  const grid = document.createElement('div');
+  grid.className = 'datesheet-grid';
+  for (const c of cards) {
+    const card = document.createElement('div');
+    card.className = 'date-card' + (!c.exam_subject ? ' no-exam' : '');
+    card.innerHTML = `
+      <span class="dc-date">${fmtDateShort(c.date)}</span>
+      <span class="dc-subject">${c.exam_subject || 'No exam scheduled'}</span>
+      <span class="dc-shift${c.shift ? '' : ' dash'}">${c.shift || '—'}</span>
+    `;
+    grid.appendChild(card);
+  }
+  section.appendChild(grid);
+  resultsEl.appendChild(section);
+}
+
 function render(data) {
   resultsEl.innerHTML = '';
 
@@ -242,6 +292,8 @@ function render(data) {
     <span class="profile-tag">${data.branch || '—'} &middot; Sem ${data.sem || '—'} &middot; Sec ${data.section || '—'}</span>
   `;
   resultsEl.appendChild(profile);
+
+  renderDatesheetCards(data.datesheet_cards);
 
   if (data.next_session) {
     const heading = document.createElement('div');

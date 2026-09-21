@@ -261,9 +261,46 @@ body{
 }
 .session-card.not-published .not-published-note{display:block;}
 
+/* Full-datesheet card grid (3 up top, 3 below on desktop; 2 or 1 per row on mobile) */
+.datesheet-section{margin-bottom:8px;}
+.datesheet-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px;
+}
+.date-card{
+  background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 12px;text-align:center;display:flex;flex-direction:column;gap:6px;
+  min-height:110px;justify-content:center;
+}
+.date-card.no-exam{opacity:.55;}
+.date-card .dc-date{font-family:var(--mono);font-weight:600;color:var(--navy-deep);font-size:.88rem;}
+.date-card .dc-subject{font-size:.8rem;color:var(--ink);line-height:1.3;overflow-wrap:anywhere;}
+.date-card .dc-shift{
+  font-family:var(--mono);font-size:.72rem;color:#fff;background:var(--navy);
+  border-radius:20px;padding:3px 10px;align-self:center;
+}
+.date-card .dc-shift.dash{background:#d8d2c2;color:var(--ink-soft);}
+
+/* SSED tip */
+.ssed-tip{
+  margin-top:10px;padding:10px 12px;border-radius:8px;
+  background:var(--amber-soft);border:1px solid var(--amber);
+  font-size:.85rem;color:#7a4f10;font-weight:600;line-height:1.4;
+}
+
+@media (max-width:640px){
+  .datesheet-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:400px){
+  .datesheet-grid{grid-template-columns:1fr;}
+}
+
 @media (max-width:520px){
   .search-panel h1{font-size:1.6rem;}
   .session-meta{grid-template-columns:1fr 1fr;}
   #search-form{flex-direction:column;}
   #search-form button{width:100%;}
+  .wrap{padding:0 14px;}
+  .room-value{font-size:1.4rem;}
+  .profile-strip{flex-direction:column;align-items:flex-start;gap:8px;}
+  .neighbor-grid, .seat-table-wrap{max-width:100%;}
 }
