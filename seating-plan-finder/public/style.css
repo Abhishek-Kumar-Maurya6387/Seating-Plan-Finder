@@ -302,8 +302,20 @@ body{
   .session-meta{grid-template-columns:1fr 1fr;}
   #search-form{flex-direction:column;}
   #search-form button{width:100%;}
-  .desc-table-wrap{overflow-x:auto;}
-  .desc-table{min-width:560px;}
+  .desc-table{
+    width:100%;
+    table-layout:fixed;
+    font-size:.72rem;
+  }
+  .desc-table th, .desc-table td{
+    padding:5px 4px;
+    overflow-wrap:anywhere;
+  }
+  .desc-table th:nth-child(1), .desc-table td:nth-child(1){width:17%;}
+  .desc-table th:nth-child(2), .desc-table td:nth-child(2){width:10%;}
+  .desc-table th:nth-child(3), .desc-table td:nth-child(3){width:10%;}
+  .desc-table th:nth-child(4), .desc-table td:nth-child(4){width:47%;}
+  .desc-table th:nth-child(5), .desc-table td:nth-child(5){width:16%;}
   .wrap{padding:0 14px;}
   .room-value{font-size:1.4rem;}
   .profile-strip{flex-direction:column;align-items:flex-start;gap:8px;}
