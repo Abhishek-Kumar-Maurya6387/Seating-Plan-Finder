@@ -15,6 +15,7 @@ const accountBadge = document.getElementById('account-badge');
 const switchAccountBtn = document.getElementById('switch-account');
 
 const roomCache = new Map(); // room_key -> room data (avoid refetching)
+let lookupInProgress = false;
 
 const ADMIN_EMAIL = 'abhishek.2428cseai17@kiet.edu';
 const adminLink = document.getElementById('admin-link');
@@ -43,7 +44,6 @@ function showApp(email, rollNo) {
   adminLink.hidden = email.toLowerCase() !== ADMIN_EMAIL;
   if (rollNo) {
     input.value = rollNo;
-    form.requestSubmit();
   }
 }
 
@@ -69,6 +69,7 @@ loginForm.addEventListener('submit', async (e) => {
     localStorage.setItem('kiet_roll', rollNo);
     loginHint.textContent = '';
     showApp(email, rollNo);
+    lookupSeat(rollNo);
   } catch (err) {
     loginHint.textContent = err.message || 'Could not sign in — please try again.';
     loginHint.className = 'form-hint error';
@@ -92,6 +93,7 @@ switchAccountBtn.addEventListener('click', () => {
   const savedRoll = localStorage.getItem('kiet_roll');
   if (savedEmail && isKietEmail(savedEmail)) {
     showApp(savedEmail, savedRoll);
+    if (savedRoll) lookupSeat(savedRoll);
   }
 })();
 
@@ -340,13 +342,13 @@ function render(data) {
   emptyState.setAttribute('data-hidden', 'true');
 }
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const roll = input.value.trim();
+async function lookupSeat(roll) {
+  if (lookupInProgress) return;
   if (!roll) {
     setHint('Please enter a roll number.', 'error');
     return;
   }
+  lookupInProgress = true;
   setHint('Looking up your seating…', 'loading');
   resultsEl.hidden = true;
 
@@ -362,5 +364,12 @@ form.addEventListener('submit', async (e) => {
     render(data);
   } catch (err) {
     setHint('Something went wrong reaching the server. Please try again.', 'error');
+  } finally {
+    lookupInProgress = false;
   }
+}
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  lookupSeat(input.value.trim());
 });
