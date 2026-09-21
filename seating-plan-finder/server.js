@@ -32,6 +32,29 @@ if (process.env.MONGODB_URI) {
   console.warn('MONGODB_URI not set — login tracking disabled, seating lookup still works.');
 }
 
+async function ensureDatabaseConnection() {
+  if (dbReady || mongoose.connection.readyState === 1) {
+    dbReady = true;
+    return true;
+  }
+  if (!process.env.MONGODB_URI) return false;
+
+  try {
+    // On a Vercel cold start, the module-level connection may still be pending.
+    if (mongoose.connection.readyState === 2) {
+      await mongoose.connection.asPromise();
+    } else {
+      await mongoose.connect(process.env.MONGODB_URI);
+    }
+    dbReady = true;
+    return true;
+  } catch (err) {
+    dbReady = false;
+    console.error('Database unavailable:', err.message);
+    return false;
+  }
+}
+
 const KIET_EMAIL_RE = /^[^\s@]+@kiet\.edu$/i;
 
 // Load the seating dataset once into memory at startup.
@@ -107,7 +130,7 @@ app.post('/api/login', async (req, res) => {
   }
   const cleanEmail = String(email).trim().toLowerCase();
 
-  if (!dbReady) {
+  if (!(await ensureDatabaseConnection())) {
     // DB not configured/unreachable — still let the student in, just can't
     // record the visit. Seating lookup itself doesn't depend on this.
     return res.json({ ok: true, tracked: false });
@@ -139,7 +162,7 @@ app.get('/api/admin/summary', async (req, res) => {
   if (email !== ADMIN_EMAIL) {
     return res.status(403).json({ error: 'Forbidden — admin access only.' });
   }
-  if (!dbReady) {
+  if (!(await ensureDatabaseConnection())) {
     return res.status(503).json({ error: 'Database not connected — usage tracking unavailable.' });
   }
 
