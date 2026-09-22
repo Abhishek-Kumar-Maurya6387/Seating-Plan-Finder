@@ -280,13 +280,6 @@ body{
 }
 .date-card .dc-shift.dash{background:#d8d2c2;color:var(--ink-soft);}
 
-/* SSED tip */
-.ssed-tip{
-  margin-top:10px;padding:10px 12px;border-radius:8px;
-  background:var(--amber-soft);border:1px solid var(--amber);
-  font-size:.85rem;color:#7a4f10;font-weight:600;line-height:1.4;
-}
-
 @media (max-width:640px){
   .datesheet-grid{grid-template-columns:repeat(2,1fr);}
 }

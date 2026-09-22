@@ -90,8 +90,17 @@ app.get('/api/lookup/:roll', (req, res) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  // A few seating-plan rows (including the 23 Sept CSEAI/CSEAIML SSED
+  // sessions) do not carry the subject themselves.  The student's datesheet
+  // has the authoritative subject for that date, so use it only as a fallback.
+  const subjectsByDate = new Map(
+    (student.datesheet_cards || [])
+      .filter((card) => card.exam_subject)
+      .map((card) => [card.date, card.exam_subject])
+  );
   const sessions = student.sessions.map((s) => ({
     ...s,
+    exam_subject: s.exam_subject || subjectsByDate.get(s.date),
     isPast: parseDate(s.date) < today,
   }));
 

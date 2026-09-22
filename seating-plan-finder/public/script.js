@@ -216,13 +216,6 @@ function buildSessionCard(session, status, myRoll) {
     node.querySelector('.meta-proctor').textContent = session.proctor;
   }
 
-  if (session.ssed_tip) {
-    const tip = document.createElement('p');
-    tip.className = 'ssed-tip';
-    tip.textContent = '⚠ ' + session.ssed_tip;
-    node.querySelector('.session-main').after(tip);
-  }
-
   node.querySelector('.stat-total').textContent = session.room_total_students ?? '—';
   node.querySelector('.stat-same').textContent = session.same_branch_section_count ?? '—';
 
